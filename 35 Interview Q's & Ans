@@ -1,0 +1,191 @@
+1. What is Apache Airflow?
+	Apache Airflow is an open-source platform for developing, scheduling, and monitoring batch-oriented workflows using Python.
+
+2. Is Apache Airflow an ETL tool?
+	Yes, it is an ETL tool.
+
+3. How do we define workflows in Apache Airflow?
+	To define and manage workflows in Airflow, we need to create DAG(Directed Acyclic Graph) files. A DAG file typically contains the tasks and their dependencies.
+
+4. What are the components of the Apache Airflow architecture?
+	Scheduler: handles both triggering scheduled workflows, and submitting Tasks to the executor to run.
+	This is a multi-threaded Python process that determines what tasks need to be run, when they need to be run, and where they are run.
+	Executor: The mechanism for running tasks. An executor is running within the scheduler whenever Airflow is operational.
+	Webserver: Its is a user interface(UI) to inspect, trigger and debug the behaviour of DAGs and tasks.
+	Metadata database: A database where all DAG and task metadata are stored like status (queued, scheduled, running, success, failed).
+
+5. What are the types of Executors in Airflow?
+	Local executor: 
+	Pros - It's straightforward and easy to set up, It's cheap.
+	Cons - It's less scalable.
+	Use cases - The Local executor is ideal for testing.
+
+	Celery executor:
+	Pros -  High availability, Built for horizontal scaling.
+	Cons - Costly
+	Use cases - It recommends for running DAGs in production, especially if you're running anything that's time sensitive.
+
+	Kubernetes executor: 
+	Pros - Cost and resource efficient, Fault tolerant
+	Cons - Kubernetes familiarity as a potential barrier to entry.
+	Use cases - It offers extraordinary capabilities. If you're familiar with Kubernets we can try.
+
+6. What are Variables (Variable Class) in Apache Airflow?
+	Variable is a key-value pair that can be used to store information in Airflow environment.
+
+7. What is the purpose of Airflow XComs?
+	They provide a method for tasks within a single DAG to communicate with each other, enabling more complex workflows and inter-task dependencies.	
+
+8. What are the states a Task can be in? Define an ideal task flow.
+	Expected order of tasks should be : none -> scheduled -> queued -> running -> success.
+
+	none: the task is defined, but the dependencies are not met.
+	scheduled: the task dependencies are met, has got assigned a scheduled interval, and are ready for a run.
+	queued: the task is assigned to an executor, waiting to be picked up by a worker.
+	running: the task is running on a worker.
+	success: the task has finished running, and got no errors.
+
+	shutdown: the task got interrupted externally to shut down while it was running.
+	restarting: the task got interrupted externally to restart while it was running.
+	failed: the task encountered an error.
+	skipped: the task got skipped during a dag run due to branching (another topic for airflow interview, will cover branching some reads later)
+	upstream_failed: An upstream task failed (the task on which this task had dependencies).
+	up_for_retry: the task had failed but is ongoing retry attempts.
+	up_for_reschedule: the task is waiting for its dependencies to be met (It is called the "Sensor" mode).
+	deferred: the task has been postponed.
+	removed: the task has been taken out from the DAG while it was running.
+
+9. What is the role of Airflow Operators?
+	Operators are the building blocks of Airflow DAGs. They contain the logic of how data is processed in a pipeline.
+	Types:
+	PythonOperator: Executes a Python function.
+	BashOperator: Executes a bash commands.
+	EmailOperator: Sends an email
+	KubernetesPodOperator: Executes a task defined as a Docker image in a Kubernetes Pod.
+	SnowflakeOperator: Executes a query against a Snowflake database
+
+10. How does airflow communicate with a third party (S3, Postgres, MySQL)?
+	Airflow communicates with third-party systems and other databases using specialized operators like PostgresOperator, MySqlOperator.
+
+11. What are the basic steps to create a DAG?
+	Importing the right modules for your DAG
+	Define a DAG : dag_id (dag_id = 'DAG-1'), start_date and schedule interval
+	Defining individual tasks
+	Setting up dependencies for the DAG 
+
+12. What is Branching in DAGs?
+	It allows to define multiple paths in your DAG based on the results of a previous task. This is achieved using the BranchPythonOperator, 
+	a specialized operator that runs a Python function to determine which downstream tasks to execute based on given defined conditions.
+
+13. What are ways to Control Airflow Workflow?
+	By default, a DAG will only run an airflow task when all its Task dependencies are finished and successful. Belo are the ways to modify this.
+
+	Branching (BranchPythonOperator): We can apply multiple branches to what path the flow should go after this task.
+	Latest Only (LatestOnlyOperator): This task will only run if date of DAG is running on current. It will help when we don't want to run while backfilling data.
+	Depends on Past (depends_on_past = true): Will only run if this task run succeeded in the previous DAG run.
+	Trigger rules ("trigger_rule"=): By default, a DAG will only run a task when all of its previous tasks have succeeded, but these help us alter those conditions. 
+	Like "trigger_rule = always" will work irrespective of previous tasks status, "trigger_rule = all_success" to run only when all of its previous jobs succeed.
+
+14. Explain the External task Sensor.
+	This is used to sense the completion status of a DAG_A from DAG_B or vice-versa. 
+	We can Define an ExternalTaskSensor in DAG_B if we want DAG_B to wait for the completion of DAG_A for a specific execution date.
+
+15. What are the ways to monitor Apache Airflow?
+	Airflow Logs: Airflow logs from the WebServer, Scheduler, and Workers performing tasks into a local system file by default.
+	DAGs View: We can see the names of our DAGs and the statuses of recently conducted runs and tasks.
+	Tree View: Tree View helps us to dig deeper into the DAG.it displays the workflow as well as it displays the status of each run and each task over time.
+
+16. How are Connections used in Apache Airflow?
+	Airflow is often used to pull and push data into other APIs or systems via hooks that are responsible for the connection. 
+	we can not use hooks to contain any personal information like authorization credentials. so we use connections to store confidential/credential data.
+
+17. Explain Dynamic DAGs.
+	These are nothing but a way to create multiple DAGs without defining each of them explicitly. 
+	This is one of the major qualities of airflow, which makes it a supreme "workflow orchestration tool". When we change one attribute/value it updates all.
+
+18. What are some of the most useful Airflow CLI commands?
+	Airflow dags list: It will list all the DAGs that you currently have running.
+	Airflow dags delete : It will delete all the data in DB related to this DAG too.
+	Airflow dags show : It will show the structure and dependencies of the DAG.
+	Airflow DB init: It initializes the DB.
+	Airflow DB check: It will check the status of your database, connected, not connected, etc.
+	Airflow DB upgrade: It will upgrade the data and dependencies of your database.
+	Airflow tasks list : It will list down all tasks related to the mentioned DAG.
+
+19. How to control the parallelism or concurrency of tasks in Apache Airflow configuration?
+	This can be set directly in the airflow configurations or it can be set per DAG level.
+	Aiflow Configuration:
+	parallelism: maximum number of tasks that can run concurrently per scheduler across all dags.
+	max_active_tasks_per_dag: maximum number of tasks that can be scheduled at once.
+	max_active_runs_per_dag: the maximum number of running tasks at once.
+
+	DAG level:
+	concurrency: maximum number of tasks that can run concurrently in this dag.
+	max_active_runs: maximum number of active runs for this DAG. The scheduler will not create new DAG runs once the limit hits.
+
+20. What do you understand by Jinja Templating?
+	Jinja Template is a web template engine in Python, which is used as a concept in Airflow.
+	we have "{{}}" as a placeholder. Whenever Jinja sees a "{{}}" it understands that this blank needs to be filled from an external value.
+
+21. What are Macros in Airflow?
+	There are pre-defined variables in Airflow that can help in calculating the time difference between two dates or more or from now to another date.
+
+22. How is the Executor involved in the Airflow Life cycle?
+	The life cycle of a task from scheduler to Executor includes the below steps:
+
+	Before the scheduler sends the command on which task the Executor has to run, depending on the types of executors, the resources of executors are kept on idle.
+	Once the scheduled time hits the clock, the Airflow scheduler sends the command to the Executor.
+	After receiving signals from the scheduler, the Executor starts allocating its resources and puts the tasks into the queue. Whenever work is available, it will pick up the tasks from the queue to start executing them.
+	Once the tasks get finished, and the scheduler receives the "Completed" state from the Executor, the resources allocated for running the task get cleaned up.
+
+23. List the types of Trigger rules.
+	all_failed: the task gets triggered if all of its parent tasks have failed.
+	all_success: the task gets triggered when all upstream tasks have succeeded.
+	all_done: the task gets triggered once all upstream tasks are done with their execution irrespective of their state, success, or failure.
+	one_failed: the task gets triggered if any one of the upstream tasks gets failed.
+	one_success: the task gets triggered if any one of the upstream tasks gets succeeds.
+	none_failed: the task gets triggered if all upstream tasks have finished successfully or been skipped.
+	none_skipped: the task gets triggered if no upstream tasks are skipped, irrespective of if they succeeded or failed.
+
+
+24. What are SLAs?
+	SLA refers to an agreement between the DE/Operations team and the stakeholders, specifying the maximum allowable duration for a Task/DAG to complete.
+	SLAs can be set at both the task level and the DAG level.
+
+25. What is Data Lineage?
+	Data lineage describes the end-to-end journey of data, starting from source to target, including all the intermediate steps and transformations it undergoes.
+
+26. What is a Spark Submit Operator?
+
+
+27. What is a Spark JDBC Operator?
+
+
+28. What is the SparkSQL operator?
+
+
+29. Difference between Client mode and Cluster mode while deploying to a Spark Job.
+
+
+30. How would you approach if you wanted to queue up multiple dags with order dependencies?
+
+
+31. What if your Apache Airflow DAG failed for the last ten days, and now you want to backfill those last ten days' data, 
+    but you don't need to run all the tasks of the dag to backfill the data?
+	If DAG failed for the last ten days, and want to backfill those days without running all tasks,
+	We can leverage the --task_regex parameter to selectively backfill only specific tasks using  'airflow backfill' command.
+
+32. What will happen if you set 'catchup=False' in the dag and 'latest_only = True' for some of the dag tasks?
+	Setting catchup=False in DAG means that the DAG will not automatically backfill any past execution dates when the schedule changes. 
+	This setting is useful when you want to start fresh and not run historical DAG runs for all the missed dates.
+
+	When we set latest_only=True some tasks within the DAG, those tasks will only execute on the latest scheduled execution date, even if catchup=False.
+
+33. What if you need to use a set of functions to be used in a DAC?
+
+34. How would you handle a task which has no dependencies on any other tasks?
+	We can set trigger_rules = always  in a task, which will make sure the task will run irrespective of whether the previous tasks have succeeded or not.
+
+35. Is there any way to restrict the number of variables to be used in your directed acyclic graph, and why would we need to do that?
+	Variables are stored in Metadata DB. Since DAG files are parsed every X seconds with large variables DAG might saturate number of allowed connections in DB.
+	To tackle that, we can use a single Airflow variable as a JSON, JSON values such as {"var1": "value1", "var2": "value2"}.
