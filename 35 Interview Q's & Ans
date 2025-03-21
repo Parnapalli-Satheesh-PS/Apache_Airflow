@@ -61,6 +61,7 @@
 	PythonOperator: Executes a Python function.
 	BashOperator: Executes a bash commands.
 	EmailOperator: Sends an email
+        DummyOpeator: It doesn’t perform any actual work but is useful for structuring workflows.
 	KubernetesPodOperator: Executes a task defined as a Docker image in a Kubernetes Pod.
 	SnowflakeOperator: Executes a query against a Snowflake database
 
